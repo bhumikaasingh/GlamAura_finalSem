@@ -1,0 +1,8 @@
+# Package
+node_modules
+
+# Env
+.env
+
+# hidden file
+.DS_Store
