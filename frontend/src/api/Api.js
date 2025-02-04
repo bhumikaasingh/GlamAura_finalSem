@@ -1,89 +1,93 @@
-import axios from "axios";
+import axios from "axios"
 
-// Creating an instance of axios
 const Api = axios.create({
-    baseURL: "http://localhost:5500",
-    withCredentials: true, // Required for CSRF cookies
-    headers: {
-        "Access-Control-Allow-Credentials": "true",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5500",
+  withCredentials: true,
+})
+
+export const fetchCSRFToken = async () => {
+  try {
+    const response = await Api.get("/api/csrf-token")
+    Api.defaults.headers["X-CSRF-Token"] = response.data.csrfToken
+  } catch (error) {
+    console.error("Failed to fetch CSRF token", error)
+  }
+}
+
+// Interceptor to attach the Authorization header
+Api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token")
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`
     }
-});
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  },
+)
 
-// Fetch CSRF Token
-const fetchCSRFToken = async () => {
-    try {
-        const response = await axios.get("http://localhost:5500/csrf-token", { withCredentials: true });
-        return response.data.csrfToken;
-    } catch (error) {
-        console.error("Failed to fetch CSRF token", error);
-        return null;
-    }
-};
-
-// Function to attach CSRF token and Authorization header
-const withCSRF = async (config = {}) => {
-    const csrfToken = await fetchCSRFToken();
-    return {
-        ...config,
-        headers: {
-            ...config.headers,
-            'csrf-token': csrfToken, // Attach CSRF token
-            'authorization': `Bearer ${localStorage.getItem('token')}`, // Attach Auth token
-        },
-    };
-};
-
-// API Endpoints with CSRF Protection
-
-// Test API
-export const testnewApi = () => Api.get('/print');
+// Auth APIs
+export const registerUserApi = (data) => Api.post("/api/auth/register", data)
+export const loginUserApi = (data) => Api.post("/api/auth/login", data)
+export const logoutUserApi = () => Api.post("/api/auth/logout")
+export const checkPasswordStrengthApi = (password) => Api.post("/api/auth/check-password-strength", { password })
 
 // User APIs
-export const registerUserApi = async (data) => Api.post('/api/user/create', data, await withCSRF());
-export const loginUserApi = async (data) => Api.post('/api/user/login', data, await withCSRF());
-export const homepageUserApi = async (data) => Api.post('/api/user/homepage', data, await withCSRF());
-export const updateUserApi = async (id, data) => Api.put(`/api/user/update-profile/${id}`, data, await withCSRF());
-export const logoutUserApi = async () => Api.get('/api/user/logout', await withCSRF());
-export const deleteUserApi = async (id) => Api.delete(`/api/user/delete_user/${id}`, await withCSRF());
-export const getAllUsersApi = async () => Api.get(`/api/user/get_all_users`, await withCSRF());
-export const profileUserApi = async (id) => Api.get(`/api/user/profile/${id}`, await withCSRF());
+export const getUserProfileApi = () => Api.get("/api/user/profile")
+export const updateUserProfileApi = (data) => Api.put("/api/user/profile", data)
+export const profileUserApi = (id) => Api.get(`/api/user/profile/${id}`)
+export const updateUserApi = (id, data) => Api.put(`/api/user/update-profile/${id}`, data)
+export const getAllUsersApi = () => Api.get("/api/user/get_all_users")
+export const deleteUserApi = (id) => Api.delete(`/api/user/delete_user/${id}`)
 
 // Product APIs
-export const productApi = () => Api.get('/api/products/get_all_products');
-export const singleProductApi = (id) => Api.get(`/api/products/get_single_product/${id}`);
-export const deleteProductApi = async (id) => Api.delete(`/api/products/delete_product/${id}`, await withCSRF());
-export const updateProductApi = async (id, data) => Api.put(`/api/products/update_product/${id}`, data, await withCSRF());
-export const createProductApi = async (data) => Api.post('/api/products/create', data, await withCSRF());
-export const searchProductApi = async (data) => Api.post('/api/products/search', data, await withCSRF());
+export const getAllProductsApi = () => Api.get("/api/products")
+export const getProductByIdApi = (id) => Api.get(`/api/products/${id}`)
+export const createProductApi = (data) => Api.post("/api/products", data)
+export const updateProductApi = (id, data) => Api.put(`/api/products/${id}`, data)
+export const deleteProductApi = (id) => Api.delete(`/api/products/${id}`)
+export const productApi = () => Api.get("/api/products/get_all_products")
+export const singleProductApi = (id) => Api.get(`/api/products/get_single_product/${id}`)
 
 // Category APIs
-export const categoryApi = () => Api.get('/api/categories/get_all_categories');
-export const createCategoryApi = async (data) => Api.post('/api/categories/create', data, await withCSRF());
-export const deleteCategoryApi = async (id) => Api.delete(`/api/categories/delete_category/${id}`, await withCSRF());
-export const updateCategoryApi = async (id, data) => Api.put(`/api/categories/update_category/${id}`, data, await withCSRF());
-export const singleCategoryApi = (id) => Api.get(`/api/categories/get_single_category/${id}`);
+export const getAllCategoriesApi = () => Api.get("/api/categories")
+export const getCategoryByIdApi = (id) => Api.get(`/api/categories/${id}`)
+export const createCategoryApi = (data) => Api.post("/api/categories", data)
+export const updateCategoryApi = (id, data) => Api.put(`/api/categories/${id}`, data)
+export const deleteCategoryApi = (id) => Api.delete(`/api/categories/${id}`)
+export const categoryApi = () => Api.get("/api/categories/get_all_categories")
+export const singleCategoryApi = (id) => Api.get(`/api/categories/get_single_category/${id}`)
 
 // Review APIs
-export const addReviewApi = async (data) => Api.post('/api/reviews/create', data, await withCSRF());
-export const fetchReviewsApi = (productId) => Api.get(`/api/reviews/${productId}`);
+export const getReviewsByProductApi = (productId) => Api.get(`/api/reviews/product/${productId}`)
+export const createReviewApi = (data) => Api.post("/api/reviews", data)
+export const updateReviewApi = (id, data) => Api.put(`/api/reviews/${id}`, data)
+export const deleteReviewApi = (id) => Api.delete(`/api/reviews/${id}`)
+export const fetchReviewsApi = (productId) => Api.get(`/api/reviews/${productId}`)
+export const addReviewApi = (data) => Api.post("/api/reviews/create", data)
 
 // Cart APIs
-export const cartApi = (id) => Api.get(`/api/carts/${id}`);
-export const createCartApi = async (data) => Api.post('/api/carts/create', data, await withCSRF());
-export const deleteCartApi = async (id) => Api.delete(`/api/carts/delete_cart/${id}`, await withCSRF());
-export const updateCartApi = async (id, data) => Api.put(`/api/carts/update_cart/${id}`, data, await withCSRF());
-export const singleCartApi = (id) => Api.get(`/api/carts/get_single_cart/${id}`);
+export const getCartApi = () => Api.get("/api/cart")
+export const addToCartApi = (data) => Api.post("/api/cart/add", data)
+export const updateCartApi = (data) => Api.put("/api/cart/update", data)
+export const removeFromCartApi = (productId) => Api.delete("/api/cart/remove", { data: { productId } })
+export const cartApi = (id) => Api.get(`/api/carts/${id}`)
+export const createCartApi = (data) => Api.post("/api/carts/create", data)
 
 // Order APIs
-export const orderApi = () => Api.get('/api/orders');
-export const createOrderApi = async (data) => Api.post('/api/orders/create', data, await withCSRF());
-export const deleteOrderApi = async (id) => Api.delete(`/api/orders/${id}`, await withCSRF());
-export const updateOrderApi = async (id, data) => Api.put(`/api/orders/update_order/${id}`, data, await withCSRF());
-export const singleOrderApi = (id) => Api.get(`/api/orders/${id}`);
-export const singleOrderApiDetails = (id) => Api.get(`/api/orders/get_single_order/${id}`);
+export const createOrderApi = (data) => Api.post("/api/orders", data)
+export const getUserOrdersApi = () => Api.get("/api/orders")
+export const getOrderByIdApi = (id) => Api.get(`/api/orders/${id}`)
+export const updateOrderStatusApi = (id, status) => Api.put(`/api/orders/${id}/status`, { status })
+export const orderApi = () => Api.get("/api/orders")
+export const singleOrderApi = (id) => Api.get(`/api/orders/${id}`)
+export const singleOrderApiDetails = (id) => Api.get(`/api/orders/get_single_order/${id}`)
+export const updateOrderApi = (id, data) => Api.put(`/api/orders/update_order/${id}`, data)
+export const deleteOrderApi = (id) => Api.delete(`/api/orders/${id}`)
 
 // Additional APIs
-export const userApi = () => Api.get('/api/user/get_all_users');
-export const fetchProductDetails = async (data) => Api.post('/api/products/bulk', data, await withCSRF());
-export const updateOrderPaymentStatus = async (id, data) => Api.put(`/api/orders/update_payment_status/${id}`, data, await withCSRF());
- 
+export const fetchProductDetails = async (data) => Api.post("/api/products/bulk", data)
+
+export default Api

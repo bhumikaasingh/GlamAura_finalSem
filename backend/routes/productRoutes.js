@@ -1,16 +1,14 @@
 const router = require('express').Router();
 const productController = require('../controllers/productController');
-const { adminGuard } = require('../middleware/authGuard');
-
-
+const { authenticate } = require("../middleware/auth")
 // Create product API
-router.post('/create', productController.createProduct, adminGuard);
+router.post('/create',authenticate, productController.createProduct);
 
 // Fetch all products
 router.get('/get_all_products', productController.getAllProducts);
 router.get('/get_single_product/:id', productController.getProduct);
-router.delete('/delete_product/:id', productController.deleteProduct, adminGuard);
-router.put('/update_product/:id', productController.updateProduct, adminGuard);
+router.delete('/delete_product/:id',authenticate, productController.deleteProduct);
+router.put('/update_product/:id',authenticate, productController.updateProduct);
 router.post('/bulk', productController.getProductsByIds);
 
 
